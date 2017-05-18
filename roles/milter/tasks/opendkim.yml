@@ -1,0 +1,49 @@
+---
+
+- name: Install opendkim
+  apt: pkg={{ item }} update_cache=yes state=present
+  with_items:
+    - opendkim
+    - opendkim-tools
+
+- name: opendkim config
+  copy: src=etc/opendkim.conf dest=/etc/opendkim.conf owner=root group={{ dovecot_group }} mode=0664
+  notify: Restart OpenDKIM
+
+- name: create opendkim-key directory
+  file:
+    path: "{{ dkim_keys_dir }}"
+    state: directory
+    mode: 0750
+    owner: root
+    group: opendkim
+
+- name: generate dkim-key
+  command: opendkim-genkey --selector={{ dkim_keyname }} --bits=2048 --directory={{ dkim_keys_dir }}
+  args:
+    creates: "/etc/opendkim/keys/{{ dkim_keyname }}.private"
+  notify: Restart OpenDKIM
+
+- name: keytable file
+  template: src=opendkim/keytable.j2 dest=/etc/opendkim/keytable owner=root group=root mode=0644
+  notify: Restart OpenDKIM
+
+- name: signingtable file
+  copy: src=etc/opendkim/signingtable dest=/etc/opendkim/signingtable owner=root group=root mode=0644
+  notify: Restart OpenDKIM
+
+
+- name: private-key permissions
+  file:
+    path: /etc/opendkim/keys/{{ dkim_keyname }}.private
+    state: file
+    owner: opendkim
+    group: opendkim
+    mode: 0600
+
+- name: add user postfix to group opendkim
+  user:
+    name: postfix
+    groups: opendkim
+    append: yes
+

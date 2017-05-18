@@ -1,0 +1,71 @@
+---
+
+- name: Preconfig postfix to select "No Configuration"
+  debconf:
+    name: postfix
+    question: postfix/mail_mailer_type
+    value: "No Configuration"
+    vtype: string
+
+- name: Install Postfix
+  apt: pkg={{ item }} update_cache=yes state=present
+  with_items:
+    - postfix
+    - postfix-mysql
+  notify:
+    - clean postfix conf
+
+- name: Fix Permissions
+  file: path=/etc/postfix owner=postfix state=directory
+
+- name: Create Application Database
+  mysql_db: name={{ sql_dovecot_db }} state=present
+  notify:
+    - Copy database dump file
+    - Dump Initial Schema to Database
+
+- name: Dump initial Scheme
+  meta: flush_handlers
+
+- name: Generate dovecot SQL User
+  mysql_user: login_user=root login_password={{ sql_root_password }} name={{ sql_dovecot_user }} password={{ sql_dovecot_user_password }} priv='{{ sql_dovecot_db }}.*:ALL' host=localhost state=present
+
+- name: Add our postfix main.cf
+  template: src=main.cf.j2 dest=/etc/postfix/main.cf
+  notify:
+    - restart postfix
+
+- name: Add our postfix master.cf
+  copy: src=etc/postfix/{{ item }} dest=/etc/postfix/{{ item }} owner={{ postfix_user }} group={{ postfix_group }} mode=0664
+  with_items:
+    - master.cf
+    - submission_header_cleanup
+  notify:
+    - restart postfix
+
+- name: Create empty Configuration Files.
+  file: path=/etc/postfix/{{ item }} state=touch owner={{ postfix_user }} group={{ postfix_group }} mode="u+rw,g+rw,o+r"
+  with_items:
+    - without_ptr
+    - postscreen_access
+  notify:
+    - postmap without_ptr
+    - restart postfix
+
+- name: Add sql folder
+  file: path=/etc/postfix/sql state=directory owner={{ postfix_user}} group={{ postfix_group }}
+
+- name: Add our SQL Templates
+  template: src=sql/{{ item }}.j2 dest=/etc/postfix/sql/{{ item }} owner={{ postfix_user }} group={{ postfix_group }} mode=0660
+  with_items:
+    - accounts.cf
+    - aliases.cf
+    - domains.cf
+    - recipient-access.cf
+    - sender-login-maps.cf
+    - tls-policy.cf
+
+- name: Run newaliases to creates "/etc/aliases.db"
+  shell: newaliases
+  args:
+    warn: no

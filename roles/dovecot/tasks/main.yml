@@ -1,0 +1,44 @@
+---
+- name: Add vmail user
+  user: name=vmail home={{ vmail_dir }} shell=/bin/false
+
+- name: Create vmail directories
+  file: path={{ item }} state=directory mode=0750 owner={{ dovecot_user }} group={{ dovecot_group }}
+  with_items:
+    - "{{ vmail_dir }}"
+    - "{{ vmail_dir }}/mailboxes"
+    - "{{ vmail_dir }}/sieve"
+    - "{{ vmail_dir }}/sieve/global"
+
+- name: Install dovecot packages
+  apt: name={{ item }} update_cache=yes state=present
+  with_items:
+    - dovecot-core
+    - dovecot-imapd
+    - dovecot-lmtpd
+    - dovecot-mysql
+    - dovecot-sieve
+    - dovecot-managesieved
+    - dovecot-antispam
+  notify:
+    - clean dovecot config
+
+# Workaround for deleting the config only if packages were installed but before the new config is copied
+- name: Clear dovecot config if the package was installed
+  meta: flush_handlers
+
+- name: Add our dovecot.conf
+  template: src=dovecot.conf.j2 dest=/etc/dovecot/dovecot.conf
+  notify:
+    - restart dovecot
+
+- name: Add our dovecot-sql.conf
+  template: src=dovecot-sql.conf.j2 dest=/etc/dovecot/dovecot-sql.conf mode=0640
+  notify:
+    - restart dovecot
+
+- name: Add spampipe script
+  copy: src=spampipe.sh dest={{ vmail_dir }}/spampipe.sh owner={{ dovecot_user }} group={{ dovecot_group }} mode=750
+
+- name: Add global sieve rules
+  copy: src=spam-global.sieve dest={{ vmail_dir }}/sieve/global/spam-global.sieve owner={{ dovecot_user }} group={{ dovecot_group }} mode=640

@@ -1,0 +1,24 @@
+---
+
+- name: Install spamassassin
+  apt: pkg={{ item }} update_cache=yes cache_valid_time=36000 state=present
+  with_items:
+    - spamassassin
+
+# SQL User and Permissions
+- name: Create Application Database
+  mysql_db: name={{ sql_spamass_db }} state=present
+  notify: import Spamassassin Initial dump
+
+- name: Generate spamassassin SQL User
+  mysql_user: login_user=root login_password={{ sql_root_password }} name={{ sql_spamass_user }} password={{ sql_spamass_user_password }} priv={{ sql_spamass_db }}.*:ALL host=localhost state=present
+
+- name: Spamassassin Configuration
+  template: src=spamass/local.cf.j2 dest=/etc/mail/spamassassin/local.cf owner=root group=vmail mode=0640
+
+- name: spamassassin sa-care skript
+  copy: src=root/sa-care.sh dest=/root/sa-care.sh owner=root group=root mode=0755
+
+- name: sa-care crontab
+  copy: src=etc/cron.d/spamassassin dest=/etc/cron.d/spamassassin owner=root group=root mode=0644
+

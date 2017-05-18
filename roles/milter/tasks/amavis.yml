@@ -1,0 +1,30 @@
+---
+
+- name: Create /etc/mailname for amavis
+  template: src=amavis/mailname.j2 dest=/etc/mailname
+
+- name: Install amavis
+  apt: name={{ item }} update_cache=yes state=present
+  with_items:
+    - amavisd-new
+    - amavisd-milter
+    - libdbi-perl
+    - libdbd-mysql-perl
+
+- name: Configure Amavis Socket
+  template: src=amavis/amavisd-milter.j2 dest=/etc/default/amavisd-milter
+  notify:
+    - restart amavisd-milter
+
+- name: Copy amavis configuration
+  template: src=amavis/50-user.j2 dest=/etc/amavis/conf.d/50-user mode=0770
+  notify:
+    - restart amavis
+
+- name: Add postfix to amavis group
+  user:
+    name: postfix
+    groups: amavis
+    append: yes
+  notify:
+    - restart postfix

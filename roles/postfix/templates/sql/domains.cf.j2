@@ -1,0 +1,5 @@
+user = {{ sql_dovecot_user }}
+password = {{ sql_dovecot_user_password }}
+hosts = {{ sql_host }}:{{ sql_port }}
+dbname = {{ sql_dovecot_db }}
+query = SELECT domain FROM domains WHERE domain='%s'

@@ -1,0 +1,22 @@
+---
+- name: restart postfix
+  service: name=postfix state=restarted
+
+- name: clean postfix conf
+  shell: rm -r /etc/postfix/sasl /etc/postfix/master.cf removes=/etc/postfix/sasl
+
+- name: postmap without_ptr
+  shell: postmap /etc/postfix/without_ptr
+
+# Copy database dump file to remote host and restore it to database 'my_db'
+- name: Copy database dump file
+  copy:
+    src: initial-schema.sql
+    dest: /tmp
+
+- name: Dump Initial Schema to Database
+  mysql_db:
+    name: "{{ sql_dovecot_db }}"
+    state: import
+    target: /tmp/initial-schema.sql
+

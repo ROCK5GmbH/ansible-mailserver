@@ -1,0 +1,2 @@
+# DH parameter re-generation
+@daily FILE=`mktemp` ; openssl dhparam 2048 -out $FILE && mv -f $FILE {{ dh_file }}.pem

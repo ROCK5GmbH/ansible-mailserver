@@ -1,0 +1,33 @@
+---
+- name: restart amavis
+  service: name=amavisd-new state=restarted
+
+- name: restart amavisd-milter
+  service: name=amavisd-milter state=restarted
+
+- name: import Spamassassin Initial dump
+  mysql_db:
+    state: import
+    name: "{{ sql_spamass_db }}"
+    target: /usr/share/doc/spamassassin/sql/bayes_mysql.sql
+
+- name: restart postfix
+  service: name=postfix state=restarted
+
+- name: Restart OpenDKIM
+  service: name=opendkim state=restarted
+
+- name: razor create
+  command: razor-admin -create
+  become: yes
+  become_user: amavis
+
+- name: razor register
+  command: razor-admin -register
+  become: yes
+  become_user: amavis
+
+- name: pyzor discover
+  command: pyzor discover
+  become: yes
+  become_user: amavis

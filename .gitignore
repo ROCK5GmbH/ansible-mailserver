@@ -1,0 +1,18 @@
+# PHPStorm project Files
+.idea
+.idea/vcs.xml
+
+# KDE directory Placeholder
+.directory
+
+# Apple Files
+.DS_Store
+
+# ansible retry files
+*.retry
+
+# Python compiled-Files
+*.pyc
+
+# vim swp-files
+.*.swp

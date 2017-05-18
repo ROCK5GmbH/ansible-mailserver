@@ -1,0 +1,168 @@
+###
+### Activated protocols
+#############################
+
+protocols = imap lmtp sieve
+
+
+
+###
+### TLS config
+#######################
+
+ssl = required
+ssl_cert = <{{ ssl_cert }}
+ssl_key = <{{ ssl_key }}
+ssl_dh_parameters_length = 2048
+ssl_protocols = !SSLv2 !SSLv3
+ssl_cipher_list = EDH+CAMELLIA:EDH+aRSA:EECDH+aRSA+AESGCM:EECDH+aRSA+SHA256:EECDH:+CAMELLIA128:+AES128:+SSLv3:!aNULL:!eNULL:!LOW:!3DES:!MD5:!EXP:!PSK:!DSS:!RC4:!SEED:!IDEA:!ECDSA:kEDH:CAMELLIA128-SHA:AES128-SHA
+ssl_prefer_server_ciphers = yes
+
+
+
+###
+### Dovecot services
+################################
+
+service imap-login {
+    inet_listener imap {
+        port = {{ imap_port }}
+    }
+}
+
+
+service managesieve-login {
+    inet_listener sieve {
+        port = {{ managesieve_port }}
+    }
+}
+
+
+service lmtp {
+    unix_listener /var/spool/postfix/private/dovecot-lmtp {
+        mode = 0660
+        group = postfix
+        user = postfix
+    }
+
+    user = {{ dovecot_user }}
+}
+
+
+service auth {
+    ### Auth socket für Postfix
+    unix_listener /var/spool/postfix/private/auth {
+        mode = 0660
+        user = postfix
+        group = postfix
+    }
+
+    ### Auth socket für LMTP-Dienst
+    unix_listener auth-userdb {
+        mode = 0660
+        user = {{ dovecot_user }}
+        group = {{ dovecot_user }}
+    }
+}
+
+
+###
+###  Protocol settings
+#############################
+
+protocol imap {
+    mail_plugins = $mail_plugins quota imap_quota antispam
+    mail_max_userip_connections = 20
+    imap_idle_notify_interval = 29 mins
+}
+
+protocol lmtp {
+    postmaster_address = {{ admin_email }}
+    mail_plugins = $mail_plugins sieve
+}
+
+
+
+###
+### Client authentication
+#############################
+
+disable_plaintext_auth = yes
+auth_mechanisms = plain login
+
+
+passdb {
+    driver = sql
+    args = /etc/dovecot/dovecot-sql.conf
+}
+
+userdb {
+    driver = sql
+    args = /etc/dovecot/dovecot-sql.conf
+}
+
+
+###
+### Mail location
+#######################
+
+mail_uid = {{ dovecot_user }}
+mail_gid = {{ dovecot_user }}
+mail_privileged_group = {{ dovecot_user }}
+
+
+mail_home = {{ vmail_dir }}/mailboxes/%d/%n
+mail_location = maildir:~/mail:LAYOUT=fs
+
+
+
+###
+### Mailbox configuration
+########################################
+
+namespace inbox {
+    inbox = yes
+
+    mailbox Spam {
+        auto = subscribe
+        special_use = \Junk
+    }
+
+    mailbox Trash {
+        auto = subscribe
+        special_use = \Trash
+    }
+
+    mailbox Drafts {
+        auto = subscribe
+        special_use = \Drafts
+    }
+
+    mailbox Sent {
+        auto = subscribe
+        special_use = \Sent
+    }
+}
+
+
+
+###
+### Mail plugins
+############################
+
+
+plugin {
+    sieve_before = {{ vmail_dir }}/sieve/global/spam-global.sieve
+    sieve = {{ vmail_dir }}/sieve/%d/%n/active-script.sieve
+    sieve_dir = {{ vmail_dir }}/sieve/%d/%n/scripts
+
+    quota = maildir:User quota
+    quota_exceeded_message = Benutzer %u hat das Speichervolumen überschritten. / User %u has exhausted allowed storage space.
+
+    antispam_backend = pipe
+    antispam_spam = Spam
+    antispam_trash = Trash
+    antispam_pipe_program = {{ vmail_dir }}/spampipe.sh
+    antispam_pipe_program_spam_arg = --spam
+    antispam_pipe_program_notspam_arg = --ham
+}

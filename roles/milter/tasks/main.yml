@@ -1,0 +1,6 @@
+---
+
+- include: amavis.yml
+- include: opendkim.yml
+- include: spamassassin.yml
+- include: razor.yml

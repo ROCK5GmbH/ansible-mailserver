@@ -1,0 +1,12 @@
+amavis_socket: "/var/run/amavis/amavisd.sock"
+amavis_milter_socket: "/var/run/amavis/amavisd-milter.sock"
+sql_dovecot_db: vmail
+sql_host: 127.0.0.1
+sql_port: 3306
+sql_dovecot_user: "{{ dovecot_user }}"
+
+dkim_keys_dir: /etc/opendkim/keys
+dkim_keyname: key
+
+sql_spamass_db: spamassassin
+sql_spamass_user: spamass

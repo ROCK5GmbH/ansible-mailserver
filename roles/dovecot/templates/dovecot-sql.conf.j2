@@ -1,0 +1,9 @@
+driver=mysql
+connect = "host={{ sql_host }} dbname={{ sql_dovecot_db }} user={{ sql_dovecot_user }} password={{ sql_dovecot_user_password }}"
+default_pass_scheme = SHA512-CRYPT
+
+password_query = SELECT username AS user, domain, password FROM accounts WHERE username = '%n' AND domain = '%d' and enabled = true;
+
+user_query = SELECT concat('*:storage=', quota, 'M') AS quota_rule FROM accounts WHERE username = '%n' AND domain = '%d' AND sendonly = false;
+
+iterate_query = SELECT username, domain FROM accounts where sendonly = false;

@@ -1,0 +1,42 @@
+---
+#
+# Mail System
+#
+
+- hosts: all
+  become: yes
+  vars_files:
+    - vars/vars.yml
+  tasks:
+    - name: Set Hostname
+      hostname:
+        name: "{{ hostname }}"
+      notify:
+        - restart systemd-logind
+
+    - name: Re-gather Facts
+      action: setup
+      when: ansible_hostname != fqdn
+
+    - name: Set FQDN per hosts file
+      lineinfile:
+        dest: /etc/hosts
+        regexp: "^127.0.1.1"
+        line: "127.0.1.1 {{ fqdn }} {{ hostname }}"
+        state: present
+        backup: yes
+      notify:
+        - restart systemd-logind
+
+  handlers:
+    - name: restart systemd-logind
+      service: name=systemd-logind state=restarted
+
+- hosts: all
+  become: yes
+  vars_files:
+    - vars/vars.yml
+  roles: 
+    - postfix
+    - dovecot
+    - milter

@@ -1,0 +1,6 @@
+---
+- name: restart dovecot
+  service: name=dovecot state=restarted
+
+- name: clean dovecot config
+  shell: rm -rf /etc/dovecot/* removes=/etc/dovecot/dovecot.conf

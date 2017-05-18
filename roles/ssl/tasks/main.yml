@@ -1,0 +1,12 @@
+---
+- name: Create our SSL cert directory
+  file: path={{ ssl_directory }} state=directory owner=root group=root mode=0775
+
+- name: Create self-signed SSL cert if no certificate is available.
+  command: openssl req -new -nodes -x509 -subj "/C={{ ssl_cert_country }}/ST={{ ssl_cert_state }}/L={{ ssl_cert_city }}/O={{ ssl_cert_organization }}/CN={{ ssl_cert_cn }}" -days {{ ssl_cert_lifetime }} -keyout {{ ssl_key }} -out {{ ssl_cert }} -extensions v3_ca creates={{ ssl_cert }}
+
+- name: Create DH parameters file
+  shell: FILE=`mktemp` ; openssl dhparam 2048 -out $FILE && mv -f $FILE {{ dh_file }} creates={{ dh_file }}
+
+- name: Copy DH parameters crontab
+  template: src=dh_params dest=/etc/cron.d/dh_params owner=root group=root mode=0644
