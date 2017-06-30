@@ -1,5 +1,0 @@
-user = {{ sql_dovecot_user }}
-password = {{ sql_dovecot_user_password }}
-hosts = {{ sql_host }}:{{ sql_port }}
-dbname = {{ sql_dovecot_db }}
-query = select 1 as found from accounts where username = '%u' and domain = '%d' and enabled = true LIMIT 1;

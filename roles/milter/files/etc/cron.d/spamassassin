@@ -1,3 +1,0 @@
-# Spamassassin care
-0 0 * * * root /root/sa-care.sh
-

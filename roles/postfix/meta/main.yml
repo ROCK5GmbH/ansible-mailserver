@@ -1,4 +1,0 @@
----
-dependencies:
-  - { role: database-server }
-  - { role: ssl }
