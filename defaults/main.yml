@@ -1,0 +1,36 @@
+---
+dovecot_sql_user_password: "{{ mailserver_sql_vmail_password }}"
+postfix_sql_user_password: "{{ mailserver_sql_vmail_password }}"
+milter_sql_user_password: "{{ mailserver_sql_vmail_password }}"
+
+mailserver_fqdn: "{{ mailserver_hostname }}.{{ mailserver_domain }}"
+dovecot_postmaster: "postmaster@{{ mailserver_domain }}"
+dovecot_imaps_port: # Disable port 993
+dovecot_ssl_key: "{{ ssl_key_path }}"
+dovecot_ssl_cert: "{{ ssl_cert_path }}"
+
+# Details for the SSL certificate if none is found on the server
+ssl_cert_cn: "{{ mailserver_fqdn }}"
+# Path to the Diffie-Hellman parameters file (will be generated for you and
+# updated daily via cronjob)
+ssl_dh_path: "{{ ssl_directory }}/dh2048.pem"
+
+# If you want IMAP or managesieve on a different port, change this
+# imap_port: 143
+# managesieve_port: 4190
+
+postfix_hostname: "{{ mailserver_fqdn }}"
+postfix_dh_path: "{{ ssl_dh_path }}"
+postfix_smtpd_milters: "unix:/var/run/opendkim/opendkim.sock,"
+postfix_non_smtpd_milters: "unix:/var/run/opendkim/opendkim.sock"
+# These milters will only be active for emails send via submission (i.e. by users, not other mailservers)
+postfix_submission_milters: "unix:/var/run/clamav/clamav-milter.ctl,unix:/var/run/opendkim/opendkim.sock"
+postfix_sql_root_password: "{{ dbserver_root_pw }}"
+
+postfix_ssl_key: "{{ ssl_key_path }}"
+postfix_ssl_cert: "{{ ssl_cert_path }}"
+
+milter_amavis_mailname: "{{ mailserver_fqdn }}"
+# Name of the private key file for DKIM signatures (without .key extension). It will reside in /etc/opendkim/keys/
+milter_dkim_key_file: "{{ mailserver_fqdn }}"
+milter_sql_root_password: "{{ dbserver_root_pw }}"
