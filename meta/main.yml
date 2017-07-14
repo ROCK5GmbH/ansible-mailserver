@@ -21,7 +21,7 @@ galaxy_info:
     - amavis
     
 dependencies:
-    - { role: ROCK5GmbH.mailserver-systembasics }
-    - { role: ROCK5GmbH.postfix }
-    - { role: ROCK5GmbH.dovecot }
-    - { role: ROCK5GmbH.milter }
+    - ROCK5GmbH.mailserver-systembasics
+    - ROCK5GmbH.postfix
+    - ROCK5GmbH.dovecot
+    - ROCK5GmbH.milter
