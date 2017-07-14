@@ -49,10 +49,14 @@ An example playbook could look like this:
 - hosts: all
   become: yes
   roles:
-    - ansible-mailserver
+    - ROCK5GmbH.mailserver
   vars:
     - vault.yml
 ```
+
+To get this role and all its dependencies, you can use the ansible galaxy:
+
+`ansible-galaxy install ROCK5GmbH.mailserver`
 
 To deploy on a single host, it is sufficient to execute
 ```bash
